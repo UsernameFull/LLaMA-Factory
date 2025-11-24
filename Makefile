@@ -22,3 +22,6 @@ style:
 
 test:
 	CUDA_VISIBLE_DEVICES= WANDB_DISABLED=true pytest -vv tests/
+
+test_npu:
+	ASCEND_RT_VISIBLE_DEVICES=0,1,2,3 WANDB_DISABLED=true pytest -vv tests/

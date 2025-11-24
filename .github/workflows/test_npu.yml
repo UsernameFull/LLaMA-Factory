@@ -1,0 +1,121 @@
+name: tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "requirements.txt"
+      - ".github/workflows/*.yml"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "**/*.py"
+      - "requirements.txt"
+      - ".github/workflows/*.yml"
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - "3.11"
+        os:
+          - "linux-aarch64-a2-1"
+        pytorch_npu:
+          - "2.7.1"
+
+    # 此处会自动读取 matrix.os 的值
+    runs-on: ${{ matrix.os }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.python }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+    container:
+      image: ascendai/cann:8.3.rc2-910b-ubuntu22.04-py3.11
+      # 🔥 修改点 2: 添加 privileged 解决 NPU 访问和之前的 seccomp 报错问题
+      options: >
+        --device /dev/davinci0
+        --device /dev/davinci1
+        --device /dev/davinci2
+        --device /dev/davinci3
+        --device /dev/davinci_manager
+        --device /dev/devmm_svm
+        --device /dev/hisi_hdc        
+        --ipc=host
+        --network host
+        --shm-size=16g
+      volumes:
+        - /usr/local/dcmi:/usr/local/dcmi
+        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
+        - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
+        - /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info
+        - /etc/ascend_install.info:/etc/ascend_install.info
+      env:
+        HF_ENDPOINT: https://hf-mirror.com
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        OS_NAME: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: "pip"
+          cache-dependency-path: "**/requirements*.txt"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[torch-npu,dev]" torch-npu==${{pytorch_npu}}
+
+      - name: Check npu and CANN info
+        run: |
+          cat /usr/local/Ascend/ascend-toolkit/latest/"$(uname -i)"-linux/ascend_toolkit_install.info
+          npu-smi info
+          python -c "import torch; print(f'NPU available: {torch.npu.is_available()}')"
+
+      - name: Check initial pip list from image
+        run: |
+          pip list
+
+      - name: Install node
+        run: |
+          sudo apt-get update || true
+          sudo apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
+      - name: Cache files
+        id: hf-hub-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/huggingface
+          key: huggingface-${{ matrix.os }}-${{ matrix.python }}-${{ hashFiles('tests/version.txt') }}
+
+      - name: Check quality
+        run: |
+          make style && make quality
+
+      - name: Check license
+        run: |
+          make license
+
+      - name: Check build
+        run: |
+          make build
+
+      - name: Test with pytest
+        run: |
+          make test_npu
+        env:
+          HF_HOME: ${{ runner.temp }}/huggingface
+          HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
