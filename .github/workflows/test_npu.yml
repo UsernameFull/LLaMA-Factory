@@ -38,7 +38,6 @@ jobs:
 
     container:
       image: ascendai/cann:8.3.rc2-910b-ubuntu22.04-py3.11
-      # 🔥 修改点 2: 添加 privileged 解决 NPU 访问和之前的 seccomp 报错问题
       options: >
         --device /dev/davinci0
         --device /dev/davinci1
@@ -75,7 +74,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ".[torch-npu,dev]" torch-npu==${{pytorch_npu}}
+          python -m pip install ".[torch-npu,dev]" torch-npu==${{matrix.pytorch_npu}}
 
       - name: Check npu and CANN info
         run: |
