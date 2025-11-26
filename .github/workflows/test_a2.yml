@@ -4,7 +4,7 @@ on:
 jobs:
   job_1:
     runs-on:
-      labels: linux-aarch-a2-1
+      labels: linux-aarch64-a2-1
     container:
       image: swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.2.rc1-910b-ubuntu22.04-py3.11
 
