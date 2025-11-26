@@ -29,7 +29,6 @@ jobs:
         pytorch_npu:
           - "2.7.1"
 
-    # 此处会自动读取 matrix.os 的值
     runs-on: ${{ matrix.os }}
 
     concurrency:
@@ -38,23 +37,6 @@ jobs:
 
     container:
       image: ascendai/cann:8.3.rc2-910b-ubuntu22.04-py3.11
-      options: >
-        --device /dev/davinci0
-        --device /dev/davinci1
-        --device /dev/davinci2
-        --device /dev/davinci3
-        --device /dev/davinci_manager
-        --device /dev/devmm_svm
-        --device /dev/hisi_hdc        
-        --ipc=host
-        --network host
-        --shm-size=16g
-#      volumes:
-#        - /usr/local/dcmi:/usr/local/dcmi
-#        - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
-#        - /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/
-#        - /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info
-#        - /etc/ascend_install.info:/etc/ascend_install.info
       env:
         HF_ENDPOINT: https://hf-mirror.com
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -75,7 +57,7 @@ jobs:
           npu-smi info
           python -c "import torch; print(f'NPU available: {torch.npu.is_available()}')"
 
-      - name: Check initial pip list from image
+      - name: Check pip list
         run: |
           pip list
 
