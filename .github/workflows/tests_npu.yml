@@ -92,6 +92,7 @@ jobs:
       - name: Test with pytest
         run: |
           make test
+          env
         env:
           HF_HOME: ${{ runner.temp }}/huggingface
           HF_HUB_OFFLINE: "${{ steps.hf-hub-cache.outputs.cache-hit == 'true' && '1' || '0' }}"
