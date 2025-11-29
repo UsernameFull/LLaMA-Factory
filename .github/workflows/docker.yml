@@ -122,7 +122,9 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: ./docker/docker-npu/Dockerfile.a3
+          file: ./docker/docker-npu/Dockerfile
+          build-args: |
+            BASE_IMAGE=quay.io/ascend/cann:8.3.rc2-a3-ubuntu22.04-py3.11
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             usernamefull/llamafactory:${{ steps.version.outputs.tag }}-npu-a3
