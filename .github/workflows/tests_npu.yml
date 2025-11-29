@@ -27,7 +27,7 @@ jobs:
         python:
           - "3.11"
         os:
-          - "linux-aarch64-a2-4"
+          - "linux-aarch64-a2-2"
         pytorch_npu:
           - "2.7.1"
 
@@ -47,6 +47,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Debug hashFiles
+        run: |
+          echo "The workspace is: ${{ github.workspace }}"
+          echo "Files found: $(find . -name 'version.txt')"
+          echo "Calculated Hash: ${{ hashFiles('tests/version.txt') }}"
+
 
       - name: Install dependencies
         run: |
