@@ -48,13 +48,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug hashFiles
-        run: |
-          echo "The workspace is: ${{ github.workspace }}"
-          echo "Files found: $(find . -name 'version.txt')"
-          echo "Calculated Hash: ${{ hashFiles('./tests/version.txt') }}"
-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
