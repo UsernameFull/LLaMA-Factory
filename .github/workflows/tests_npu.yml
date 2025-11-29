@@ -52,7 +52,7 @@ jobs:
         run: |
           echo "The workspace is: ${{ github.workspace }}"
           echo "Files found: $(find . -name 'version.txt')"
-          echo "Calculated Hash: ${{ hashFiles('tests/version.txt') }}"
+          echo "Calculated Hash: ${{ hashFiles('./tests/version.txt') }}"
 
 
       - name: Install dependencies
