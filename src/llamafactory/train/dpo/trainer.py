@@ -99,7 +99,11 @@ class CustomDPOTrainer(DPOTrainer):
                 ):  # quantized models are already set on the correct device
                     self.ref_model = prepare_deepspeed(self.ref_model, self.accelerator)
             elif self.is_fsdp_enabled:
-                self.ref_model = prepare_fsdp(self.ref_model, self.accelerator)
+                if self.accelerator.is_fsdp2:
+                    from accelerate.utils.fsdp_utils import fsdp2_prepare_model
+                    self.ref_model = fsdp2_prepare_model(self.ref_model, self.accelerator)
+                else:
+                    self.ref_model = prepare_fsdp(self.ref_model, self.accelerator)
             else:
                 self.ref_model = self.accelerator.prepare_model(self.ref_model, evaluation_mode=True)
                 self.ref_model.eval()
